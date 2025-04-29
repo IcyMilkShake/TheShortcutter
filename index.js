@@ -33,12 +33,12 @@ document.addEventListener('DOMContentLoaded', () => {
       // Handle commands
       if (spoke.toLowerCase() === "open chrome") {
         console.log("Command detected: Opening Chrome");
-        fetch('https://localhost:3000/open?app=chrome');
+        fetch('/open?app=chrome');
         console.log("fetched")
       }
       if (spoke.toLowerCase() === "open arknights") {
         console.log("Command detected: Opening best game");
-        fetch('https://localhost:3000/open?app=arknights');
+        fetch('/open?app=arknights');
         console.log("fetched")
       }
 

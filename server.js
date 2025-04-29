@@ -2,7 +2,7 @@ const express = require('express');
 const path = require('path');  // To handle file paths
 const { exec } = require('child_process');
 const app = express();
-const port = 8080;
+const PORT = 8080;
 
 // Serve static files from the 'public' folder
 app.use(express.static(path.join(__dirname, '/')));
@@ -36,6 +36,6 @@ app.get('/open', (req, res) => {
   });
 });
 
-app.listen(port, () => {
-  console.log("App launcher server running at port: ",port);
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
