@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <!-- Viewport meta tag for responsive design -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- Modify CSP to allow 'unsafe-inline' for scripts and styles in development (not recommended for production) -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';">
+  <title>Speech Test</title>
+
+  <!-- Link to external CSS -->
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <header>
+    <h1 id="Spoken">Speak something!</h1>
+  </header>
+
+  <main>
+    <section>
+      <label for="languageSelect" class="sr-only">Choose a language:</label>
+      <select id="languageSelect" aria-label="Language selection">
+        <option value="en-US">English (US)</option>
+        <option value="th-TH">Thai (ไทย)</option>
+        <option value="zh-CN">Chinese (Simplified 中文)</option>
+      </select>
+    </section>
+  </main>
+
+  <!-- Debugging script to check if preload is working -->
+  <script>
+    console.log('HTML document loaded');
+  </script>
+
+  <!-- Load the main renderer script -->
+  <script src="index.js" defer></script>
+</body>
+
+</html>
