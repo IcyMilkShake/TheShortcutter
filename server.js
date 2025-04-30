@@ -26,6 +26,7 @@ app.get('/open', (req, res) => {
   if (appName === 'chrome') {
     if (isWindows) {
       command = `"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"`; // full path to exe
+      console.log("opened")
     }
   } else if (appName === 'arknights') {
     if (isWindows) {
