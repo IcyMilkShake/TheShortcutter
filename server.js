@@ -13,16 +13,24 @@ app.get('/', (req, res) => {
 });
 
 // Handle /open requests
+const os = require('os');
+
 app.get('/open', (req, res) => {
   const appName = req.query.app;
   console.log(`Request to open: ${appName}`);
 
   let command = '';
 
+  const isWindows = os.platform() === 'win32';
+
   if (appName === 'chrome') {
-    command = '"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"';
+    command = isWindows
+      ? `"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"`
+      : 'google-chrome'; // or 'xdg-open http://localhost:8080' on Linux
   } else if (appName === 'arknights') {
-    command = '"C:\\Arknights"';
+    command = isWindows
+      ? '"C:\\Arknights\\Arknights.exe"'
+      : '/path/to/arknights/on/linux'; // adjust as needed
   } else {
     return res.status(400).send('Unknown app');
   }
@@ -35,6 +43,7 @@ app.get('/open', (req, res) => {
     res.send('App launched');
   });
 });
+
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);
