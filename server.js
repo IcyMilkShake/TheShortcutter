@@ -16,31 +16,18 @@ app.get('/', (req, res) => {
 const os = require('os');
 
 app.get('/open', (req, res) => {
-  const appName = req.query.app;
-  console.log(`Request to open: ${appName}`);
-
-  const isWindows = os.platform() === 'win32';
-
-  let command = '';
-  console.log(isWindows)
-  if (appName === 'chrome') {
-    if (isWindows) {
-      command = `"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"`; // full path to exe
-      console.log("opened")
-    }
-  } else if (appName === 'arknights') {
-    if (isWindows) {
-      command = `"C:\\Path\\To\\Arknights.exe"`; // update this to actual path
-    }
-  } else {
+  const commandMap = {
+    chrome: `"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"`,
+    arknights: `"C:\\Path\\To\\Arknights.exe"`
+  };
+  console.log(commandMap)
+  const appName = req.query.app.toLowerCase();
+  const command = commandMap[appName];
+  
+  if (!command) {
     return res.status(400).send('Unknown app');
   }
-
-  if (!command) {
-    return res.status(500).send('Platform or path unsupported.');
-  }
-
-  // Use exec with shell:true so Windows paths and quotes work
+  
   exec(command, { shell: true }, (err) => {
     if (err) {
       console.error('Failed to open app:', err);
@@ -48,6 +35,7 @@ app.get('/open', (req, res) => {
     }
     res.send('App launched');
   });
+  
 });
 
 
