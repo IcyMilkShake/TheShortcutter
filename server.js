@@ -22,7 +22,7 @@ app.get('/open', (req, res) => {
   const isWindows = os.platform() === 'win32';
 
   let command = '';
-
+  console.log(appName)
   if (appName === 'chrome') {
     if (isWindows) {
       command = `"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"`; // full path to exe
