@@ -1,6 +1,5 @@
 from flask import Flask, render_template, request, jsonify, send_from_directory
 import os
-import subprocess
 import json
 import uuid
 from pymongo import MongoClient
@@ -70,19 +69,6 @@ def save_shortcuts_to_file(shortcuts):
     except Exception as e:
         print(f"Error saving shortcuts file: {e}")
 
-def run_shortcut(shortcut_path):
-    try:
-        if os.path.exists(shortcut_path):
-            # For Linux, we can use xdg-open to open .lnk files if properly configured
-            # Or use wine for Windows shortcuts
-            if shortcut_path.lower().endswith('.lnk'):
-                subprocess.Popen(['xdg-open', shortcut_path])
-            return True
-        return False
-    except Exception as e:
-        print(f"Error running shortcut: {e}")
-        return False
-
 # Routes
 @app.route('/')
 def index():
@@ -100,10 +86,10 @@ def uploaded_file(filename):
 def get_shortcuts():
     # Try to get shortcuts from MongoDB, fallback to local file
     shortcuts = get_shortcuts_from_db()
-    if shortcuts is None:
-
+    if not shortcuts:
         shortcuts = get_shortcuts_from_file()
     return jsonify(shortcuts)
+
 @app.route('/api/shortcuts', methods=['POST'])
 def add_shortcut():
     print("Received POST request to add shortcut.")  # Log the request
@@ -114,7 +100,7 @@ def add_shortcut():
     if file.filename == '':
         return jsonify({'error': 'No selected file'}), 400
     
-    if allowed_file(file.filename) is None:
+    if not allowed_file(file.filename):
         return jsonify({'error': 'File type not allowed. Please upload a .lnk file'}), 400
     
     try:
@@ -139,6 +125,7 @@ def add_shortcut():
             'voiceCommand': voice_command,
             'path': file_path,
             'filename': unique_filename,
+            'originalName': filename,  # Store the original filename for client display
             'iconColor': request.form.get('iconColor', '#3498db')
         }
         
@@ -234,12 +221,8 @@ def delete_shortcut(shortcut_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/open', methods=['GET'])
-def open_shortcut():
-    shortcut_id = request.args.get('id')
-    if shortcut_id is None:
-        return jsonify({'error': 'No shortcut ID specified'}), 400
-    
+@app.route('/download/<shortcut_id>', methods=['GET'])
+def download_shortcut(shortcut_id):
     # Find the shortcut
     shortcut = None
     
@@ -260,12 +243,13 @@ def open_shortcut():
     if shortcut is None:
         return jsonify({'error': 'Shortcut not found'}), 404
     
-    # Run the shortcut
-    success = run_shortcut(shortcut['path'])
-    if success:
-        return jsonify({'success': True})
-    else:
-        return jsonify({'error': 'Failed to open shortcut'}), 500
+    # Return the file for download
+    return send_from_directory(
+        app.config['UPLOAD_FOLDER'],
+        os.path.basename(shortcut['path']),
+        as_attachment=True,
+        download_name=shortcut.get('originalName', os.path.basename(shortcut['path']))
+    )
 
 if __name__ == '__main__':
     # For development only - in production use NGINX with gunicorn/uwsgi

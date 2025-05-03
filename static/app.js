@@ -168,20 +168,37 @@ async function deleteShortcutFromServer(shortcutId) {
   }
 }
 
+// This function will download and then launch the shortcut
 async function launchShortcut(shortcutId) {
   try {
-    const res = await fetch(`/open?id=${shortcutId}`);
-    
-    if (!res.ok) {
-      const errorData = await res.json();
-      throw new Error(errorData.error || 'Failed to launch shortcut');
+    // First, find the shortcut in our local array
+    const shortcut = shortcuts.find(s => s.id === shortcutId);
+    if (!shortcut) {
+      throw new Error('Shortcut not found');
     }
     
-    return await res.json();
+    // Create a temporary anchor element to download the file
+    const downloadLink = document.createElement('a');
+    downloadLink.href = `/download/${shortcutId}`;
+    downloadLink.style.display = 'none';
+    document.body.appendChild(downloadLink);
+    
+    // Trigger the download - this will cause the browser to download the .lnk file
+    downloadLink.click();
+    
+    // Clean up
+    setTimeout(() => {
+      document.body.removeChild(downloadLink);
+    }, 100);
+    
+    // Show notification
+    showSuccessNotification(`Launching ${shortcut.name}...`);
+    
+    return { success: true };
   } catch (err) {
     console.error('Failed to launch shortcut:', err);
     showErrorNotification(err.message || 'Failed to launch shortcut');
-    return false;
+    return { success: false };
   }
 }
 
@@ -209,7 +226,7 @@ function showEditModal(shortcutId) {
   currentEditAppId = shortcutId;
   editAppNameInput.value = shortcut.name;
   editVoiceCommandInput.value = shortcut.voiceCommand;
-  editAppPathInput.value = shortcut.path || shortcut.filename;
+  editAppPathInput.value = shortcut.originalName || shortcut.filename;
   
   editModal.classList.add('active');
 }
