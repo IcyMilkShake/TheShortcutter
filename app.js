@@ -29,10 +29,19 @@ let shortcuts = [];
 let recognition = null;
 let isListening = false;
 
+// Get API base URL from Electron preload script
+const API_BASE_URL = window.electronAPI ? window.electronAPI.apiBaseUrl : 'https://pat.ipo-servers.net:8080';
+
 // ---- Initialize ----
 function init() {
   fetchShortcutsFromServer();
   setupSpeechRecognition();
+  
+  // Log platform info if running in Electron
+  if (window.electronAPI) {
+    const appInfo = window.electronAPI.getAppInfo();
+    console.log(`Running on ${appInfo.platform}`);
+  }
 }
 
 // Call init to start the app
@@ -72,6 +81,22 @@ fileInput.addEventListener('change', (e) => {
   }
 });
 
+// Add file selection through Electron if available
+if (window.electronAPI) {
+  uploadArea.addEventListener('click', async () => {
+    const result = await window.electronAPI.selectFile();
+    if (result.success) {
+      // Create a file object from the result
+      const file = new File(
+        [Buffer.from(result.fileData, 'base64')], 
+        result.fileName, 
+        { type: 'application/octet-stream' }
+      );
+      handleFileSelection(file, result.filePath);
+    }
+  });
+}
+
 // Drag and drop for upload area
 uploadArea.addEventListener('dragover', (e) => {
   e.preventDefault();
@@ -98,7 +123,7 @@ uploadArea.addEventListener('drop', (e) => {
 // API Functions
 async function fetchShortcutsFromServer() {
   try {
-    const res = await fetch('/api/shortcuts');
+    const res = await fetch(`${API_BASE_URL}/api/shortcuts`);
     const data = await res.json();
     shortcuts = data;
     renderShortcuts();
@@ -110,7 +135,7 @@ async function fetchShortcutsFromServer() {
 
 async function saveShortcutToServer(formData) {
   try {
-    const res = await fetch('/api/shortcuts', {
+    const res = await fetch(`${API_BASE_URL}/api/shortcuts`, {
       method: 'POST',
       body: formData
     });
@@ -130,7 +155,7 @@ async function saveShortcutToServer(formData) {
 
 async function updateShortcutOnServer(shortcutId, data) {
   try {
-    const res = await fetch(`/api/shortcuts/${shortcutId}`, {
+    const res = await fetch(`${API_BASE_URL}/api/shortcuts/${shortcutId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
@@ -151,7 +176,7 @@ async function updateShortcutOnServer(shortcutId, data) {
 
 async function deleteShortcutFromServer(shortcutId) {
   try {
-    const res = await fetch(`/api/shortcuts/${shortcutId}`, {
+    const res = await fetch(`${API_BASE_URL}/api/shortcuts/${shortcutId}`, {
       method: 'DELETE'
     });
     
@@ -177,24 +202,55 @@ async function launchShortcut(shortcutId) {
       throw new Error('Shortcut not found');
     }
     
-    // Create a temporary anchor element to download the file
-    const downloadLink = document.createElement('a');
-    downloadLink.href = `/download/${shortcutId}`;
-    downloadLink.style.display = 'none';
-    document.body.appendChild(downloadLink);
-    
-    // Trigger the download - this will cause the browser to download the .lnk file
-    downloadLink.click();
-    
-    // Clean up
-    setTimeout(() => {
-      document.body.removeChild(downloadLink);
-    }, 100);
-    
     // Show notification
     showSuccessNotification(`Launching ${shortcut.name}...`);
     
-    return { success: true };
+    if (window.electronAPI) {
+      // In Electron environment, download and launch the shortcut
+      // First, download the shortcut file
+      const response = await fetch(`${API_BASE_URL}/download/${shortcutId}`);
+      const blob = await response.blob();
+      
+      // Convert blob to base64
+      const reader = new FileReader();
+      
+      // Use a promise to handle the async reader
+      const fileData = await new Promise((resolve, reject) => {
+        reader.onloadend = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+      
+      // Save the file locally and get the path
+      const saveResult = await window.electronAPI.saveDownloadedFile(
+        fileData, 
+        shortcut.originalName || `${shortcut.name}.lnk`
+      );
+      
+      if (saveResult.success) {
+        // Launch the shortcut
+        const launchResult = await window.electronAPI.launchShortcut(saveResult.filePath);
+        return launchResult;
+      } else {
+        throw new Error('Failed to save shortcut file');
+      }
+    } else {
+      // In browser environment, just trigger the download
+      const downloadLink = document.createElement('a');
+      downloadLink.href = `${API_BASE_URL}/download/${shortcutId}`;
+      downloadLink.style.display = 'none';
+      document.body.appendChild(downloadLink);
+      
+      // Trigger the download
+      downloadLink.click();
+      
+      // Clean up
+      setTimeout(() => {
+        document.body.removeChild(downloadLink);
+      }, 100);
+      
+      return { success: true };
+    }
   } catch (err) {
     console.error('Failed to launch shortcut:', err);
     showErrorNotification(err.message || 'Failed to launch shortcut');
@@ -237,7 +293,7 @@ function hideEditModal() {
 }
 
 // Handle file selection
-function handleFileSelection(file) {
+function handleFileSelection(file, filePath = null) {
   selectedFile = file;
   appPathInput.value = file.name; // For display purposes
   
@@ -251,6 +307,11 @@ function handleFileSelection(file) {
   
   // Suggest a voice command
   voiceCommandInput.value = `open ${fileName.toLowerCase()}`;
+  
+  // Store the file path if provided (from Electron file picker)
+  if (filePath) {
+    selectedFile.path = filePath;
+  }
 }
 
 // Save new shortcut
