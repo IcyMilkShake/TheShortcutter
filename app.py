@@ -1,11 +1,11 @@
-from flask import Flask, render_template, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory
 import os
 import json
 import uuid
 from pymongo import MongoClient
 from werkzeug.utils import secure_filename
 
-app = Flask(__name__, static_folder='static')
+app = Flask(__name__)
 
 # Configuration
 UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uploads')
@@ -70,18 +70,6 @@ def save_shortcuts_to_file(shortcuts):
         print(f"Error saving shortcuts file: {e}")
 
 # Routes
-@app.route('/')
-def index():
-    return render_template('index.html')
-
-@app.route('/static/<path:path>')
-def serve_static(path):
-    return send_from_directory('static', path)
-
-@app.route('/uploads/<path:filename>')
-def uploaded_file(filename):
-    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
-
 @app.route('/api/shortcuts', methods=['GET'])
 def get_shortcuts():
     # Try to get shortcuts from MongoDB, fallback to local file
@@ -252,5 +240,4 @@ def download_shortcut(shortcut_id):
     )
 
 if __name__ == '__main__':
-    # For development only - in production use NGINX with gunicorn/uwsgi
     app.run(host='0.0.0.0', port=8080, debug=True)
