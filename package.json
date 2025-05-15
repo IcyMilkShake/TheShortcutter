@@ -1,0 +1,99 @@
+{
+  "name": "voice-command-app-launcher",
+  "version": "1.0.0",
+  "description": "A speech-controlled application launcher with MongoDB integration",
+  "main": "main.js",
+  "scripts": {
+    "start": "cross-env NODE_ENV=development electron .",
+    "dev": "electron . --dev",
+    "build": "cross-env NODE_ENV=production electron-builder",
+    "package": "electron-packager . TheShortcutter --platform=win32 --arch=x64 --icon=amiyi.ico --overwrite"
+  },
+  "keywords": [
+    "speech",
+    "voice",
+    "command",
+    "launcher",
+    "express",
+    "mongodb"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "mongodb": "^5.9.2",
+    "path": "^0.12.7",
+    "request": "^2.88.2",
+    "requests": "^0.3.0",
+    "stream": "^0.0.3"
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3",
+    "electron": "^36.1.0",
+    "electron-builder": "^26.0.12",
+    "electron-packager": "^17.1.2",
+    "electron-rebuild": "^3.2.9",
+    "nodemon": "^2.0.22"
+  },
+  "build": {
+    "appId": "com.milkshake.theshortcutter",
+    "productName": "TheShortcutter",
+    "extraResources": [
+      {
+        "from": "python_scripts",
+        "to": "python_scripts",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "vosk-model",
+        "to": "vosk-model",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "python_executor",
+        "to": "python_executor",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "files": [
+      "**/*",
+      "vosk-model/**/*",
+      "python_scripts/**/*",
+      "python_executor/**/*",
+      "!builder-debug.yml",
+      "!dev_python",
+      "!**/*.nsh",
+      "!**/Temp/**"
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "amiyi.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "mac": {
+      "target": [
+        "dmg"
+      ]
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ]
+    }
+  }
+}

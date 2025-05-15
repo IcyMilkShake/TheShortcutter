@@ -1,0 +1,6 @@
+dist/
+node_modules/
+python_executor/
+dev_python/
+vosk-model/
+voice_recognition.py/
