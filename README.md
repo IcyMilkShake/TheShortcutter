@@ -1,7 +1,7 @@
 🗣️ TheShortcutter
 TheShortcutter is a desktop app that lets you control your computer with your voice. Built with Electron and powered by Vosk, it listens for your speech and maps it to keyboard shortcuts, commands, or custom actions — making your workflow faster, hands-free, and just a little cooler.
 
-✨ Features
+✨ Features a
 🎙️ Offline Voice Recognition with Vosk
 
 🧠 Customizable voice commands mapped to:
